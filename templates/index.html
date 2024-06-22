@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat PDF with Gemini</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom CSS styles */
+        body {
+            padding-top: 20px;
+        }
+        .form-container {
+            display: none; /* Initially hide form containers */
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            margin: 0 auto; /* Center align horizontally */
+            margin-top: 20px; /* Add top margin */
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">Chat PDF with Gemini</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showUploadPdfForm()">Upload PDF</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showAskQuestionForm()">Ask a Question</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Upload PDF Form -->
+<div class="form-container" id="uploadFormContainer">
+    <h1 class="text-center">Upload PDF Files</h1>
+    <form id="uploadForm" action="/process" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="pdf_files">Select PDF Files:</label>
+            <input type="file" class="form-control-file" id="pdf_files" name="pdf_files" accept=".pdf" multiple>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Submit & Process</button>
+    </form>
+</div>
+
+<!-- Ask a Question Form -->
+<div class="form-container" id="questionFormContainer">
+    <h1 class="text-center">Ask a Question</h1>
+    <form id="questionForm">
+        <div class="form-group">
+            <label for="question">Your Question:</label>
+            <input type="text" class="form-control" id="question" name="question" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Ask</button>
+    </form>
+</div>
+
+<!-- Loader Section -->
+<div id="loader" class="mt-4 d-none text-center">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <p class="mt-2">Processing...</p>
+</div>
+
+<!-- Response Display -->
+<div id="response" class="mt-4"></div>
+
+<!-- JavaScript and Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Function to show loader
+    function showLoader() {
+        document.getElementById('loader').classList.remove('d-none');
+    }
+
+    // Function to hide loader
+    function hideLoader() {
+        document.getElementById('loader').classList.add('d-none');
+    }
+
+    // Show "Upload PDF" form and hide "Ask a Question" form
+    function showUploadPdfForm() {
+        document.getElementById('uploadFormContainer').style.display = 'block';
+        document.getElementById('questionFormContainer').style.display = 'none';
+    }
+
+    // Show "Ask a Question" form and hide "Upload PDF" form
+    function showAskQuestionForm() {
+        document.getElementById('questionFormContainer').style.display = 'block';
+        document.getElementById('uploadFormContainer').style.display = 'none';
+    }
+
+    // Handle form submission for asking a question
+    document.getElementById('questionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        try {
+            showLoader(); // Show loader while processing
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch response');
+            }
+
+            const result = await response.text();
+            document.getElementById('response').innerHTML = '<div class="alert alert-success" role="alert">' + result + '</div>';
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('response').innerHTML = '<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>';
+        } finally {
+            hideLoader(); // Hide loader after processing
+        }
+    });
+
+    // Handle form submission for processing PDF files
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        try {
+            showLoader(); // Show loader while processing
+
+            const response = await fetch('/process', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to process PDF files');
+            }
+
+            const result = await response.text();
+            document.getElementById('response').innerHTML = '<div class="alert alert-success" role="alert">' + result + '</div>';
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('response').innerHTML = '<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>';
+        } finally {
+            hideLoader(); // Hide loader after processing
+        }
+    });
+
+    // Show "Upload PDF" form by default on page load
+    showUploadPdfForm(); // Or use showAskQuestionForm() to show "Ask a Question" form by default
+</script>
+
+</body>
+</html>
